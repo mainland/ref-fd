@@ -1,9 +1,9 @@
 name:           ref-fd
-version:        0.2
+version:        0.3.0.1
 cabal-version:  >= 1.6
 license:        BSD3
 license-file:   LICENSE
-copyright:      (c) 2006-2010 Harvard University
+copyright:      (c) 2006-2011 Harvard University
 author:         Geoffrey Mainland <mainland@eecs.harvard.edu>
 maintainer:     mainland@eecs.harvard.edu
 stability:      alpha
@@ -23,9 +23,9 @@ library
 
   build-depends:
     base >= 4 && < 5,
-    stm >= 2.1 && < 2.2,
+    stm >= 2.1 && < 2.3,
     transformers >= 0.2 && < 0.3
 
 source-repository head
-  type:     svn
-  location: http://senseless.eecs.harvard.edu/repos/mainland-projects/ref-fd/trunk/
+  type:     git
+  location: git://github.com/mainland/ref-fd.git
