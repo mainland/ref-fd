@@ -1,9 +1,9 @@
 name:           ref-fd
-version:        0.3.0.1
+version:        0.3.0.2
 cabal-version:  >= 1.6
 license:        BSD3
 license-file:   LICENSE
-copyright:      (c) 2006-2011 Harvard University
+copyright:      (c) 2006-2012 Harvard University
 author:         Geoffrey Mainland <mainland@eecs.harvard.edu>
 maintainer:     mainland@eecs.harvard.edu
 stability:      alpha
@@ -23,8 +23,8 @@ library
 
   build-depends:
     base >= 4 && < 5,
-    stm >= 2.1 && < 2.3,
-    transformers >= 0.2 && < 0.3
+    stm >= 2.1 && < 2.4,
+    transformers >= 0.2 && < 0.4
 
 source-repository head
   type:     git
