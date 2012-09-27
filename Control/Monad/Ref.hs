@@ -1,8 +1,8 @@
 {- |
 License: BSD-style
 Maintainer: Andy Sonnenburg <andy22286@gmail.com>
-Stability:  experimental
-Portability:  non-portable
+Stability: experimental
+Portability: non-portable
 -}
 module Control.Monad.Ref
        ( module Exports
