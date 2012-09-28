@@ -16,10 +16,6 @@ description:    Contains a 'MonadRef' type class that abstracts over the
                 that can operate in either the ST monad or the IO monad.
 build-type:     Simple
 
-source-repository head
-  type: git
-  location: git://github.com/sonyandy/ref-fd.git
-
 library
   default-language: Haskell98
   exposed-modules:
@@ -38,3 +34,7 @@ library
     MultiParamTypeClasses
     UndecidableInstances
   ghc-options: -Wall
+
+source-repository head
+  type:     git
+  location: git://github.com/mainland/ref-fd.git
