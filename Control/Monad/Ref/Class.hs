@@ -26,15 +26,15 @@
 -- SUCH DAMAGE.
 
 --------------------------------------------------------------------------------
-{- |
-Module      :  Control.Monad.Ref.Class
-Copyright   :  (c) Harvard University 2006-2011
-License     :  BSD-style
-Maintainer  :  mainland@eecs.harvard.edu
-
-Stability   :  experimental
-Portability :  non-portable
--}
+-- |
+-- Module      :  Control.Monad.Ref
+-- Copyright   :  (c) Harvard University 2006-2011
+-- License     :  BSD-style
+-- Maintainer  :  mainland@eecs.harvard.edu
+--
+-- Stability   :  experimental
+-- Portability :  non-portable
+--
 --------------------------------------------------------------------------------
 {-# LANGUAGE CPP #-}
 #ifdef LANGUAGE_DefaultSignatures
@@ -81,33 +81,32 @@ import Data.STRef (STRef,
                    readSTRef,
                    writeSTRef)
 
-{- |
-The 'MonadRef' type class abstracts over the details of manipulating
-references, allowing one to write code that uses references and can operate in
-any monad that supports reference operations.
--}
+-- |The 'MonadRef' type class abstracts over the details of manipulating
+-- references, allowing one to write code that uses references and can operate
+-- in any monad that supports reference operations.
+
 class Monad m => MonadRef ref m | m -> ref where
-  -- | Create a new reference
-  newRef :: a -> m (ref a)
+    -- |Create a new reference
+    newRef :: a -> m (ref a)
 #ifdef LANGUAGE_DefaultSignatures
-  default newRef :: (MonadRef ref m, MonadTrans t) => a -> t m (ref a)
-  newRef = lift . newRef
+    default newRef :: (MonadRef ref m, MonadTrans t) => a -> t m (ref a)
+    newRef = lift . newRef
 #endif
-  -- | Read the value of a reference
-  readRef :: ref a -> m a
+    -- | Read the value of a reference
+    readRef :: ref a -> m a
 #ifdef LANGUAGE_DefaultSignatures
-  default readRef :: (MonadRef ref m, MonadTrans t) => ref a -> t m a
-  readRef = lift . readRef
+    default readRef :: (MonadRef ref m, MonadTrans t) => ref a -> t m a
+    readRef = lift . readRef
 #endif
-  -- | Write a new value to a reference
-  writeRef :: ref a -> a -> m ()
+    -- | Write a new value to a reference
+    writeRef :: ref a -> a -> m ()
 #ifdef LANGUAGE_DefaultSignatures
-  default writeRef :: (MonadRef ref m, MonadTrans t) => ref a -> a -> t m ()
-  writeRef ref = lift . writeRef ref
+    default writeRef :: (MonadRef ref m, MonadTrans t) => ref a -> a -> t m ()
+    writeRef ref = lift . writeRef ref
 #endif
-  -- | Mutate the contents of a reference
-  modifyRef :: ref a -> (a -> a) -> m ()
-  modifyRef r f = readRef r >>= writeRef r . f
+    -- | Mutate the contents of a reference
+    modifyRef :: ref a -> (a -> a) -> m ()
+    modifyRef r f = readRef r >>= writeRef r . f
 
 modifyRefDefault :: ( MonadRef ref m
                     , MonadTrans t
@@ -115,31 +114,31 @@ modifyRefDefault :: ( MonadRef ref m
 modifyRefDefault ref = lift . modifyRef ref
 
 class MonadRef ref m => MonadAtomicRef ref m where
-  -- | Atomically mutate the contents of a reference
-  atomicModifyRef :: ref a -> (a -> (a, b)) -> m b
+    -- | Atomically mutate the contents of a reference
+    atomicModifyRef :: ref a -> (a -> (a, b)) -> m b
 #ifdef LANGUAGE_DefaultSignatures
-  default atomicModifyRef :: ( MonadAtomicRef ref m
-                             , MonadTrans t
-                             ) => ref a -> (a -> (a, b)) -> t m b
-  atomicModifyRef ref = lift . atomicModifyRef ref
+    default atomicModifyRef :: ( MonadAtomicRef ref m
+                               , MonadTrans t
+                               ) => ref a -> (a -> (a, b)) -> t m b
+    atomicModifyRef ref = lift . atomicModifyRef ref
 #endif
 
 instance MonadRef (STRef s) (ST s) where
-  newRef = newSTRef
-  readRef = readSTRef
-  writeRef = writeSTRef
-  modifyRef = modifySTRef
+    newRef    = newSTRef
+    readRef   = readSTRef
+    writeRef  = writeSTRef
+    modifyRef = modifySTRef
 
 instance MonadRef IORef IO where
-  newRef = newIORef
-  readRef = readIORef
-  writeRef = writeIORef
-  modifyRef = modifyIORef
+    newRef    = newIORef
+    readRef   = readIORef
+    writeRef  = writeIORef
+    modifyRef = modifyIORef
 
 instance MonadRef TVar STM where
-  newRef = newTVar
-  readRef = readTVar
-  writeRef = writeTVar
+    newRef    = newTVar
+    readRef   = readTVar
+    writeRef  = writeTVar
 
 #ifndef LANGUAGE_DefaultSignatures
 #define ModifyRef_defaults\
@@ -174,45 +173,44 @@ instance (Monoid w, MonadRef ref m) => MonadRef ref (Strict.WriterT w m) where
   ModifyRef_defaults
 
 instance MonadAtomicRef IORef IO where
-  atomicModifyRef = atomicModifyIORef
+    atomicModifyRef = atomicModifyIORef
 
 instance MonadAtomicRef TVar STM where
-  atomicModifyRef r f = do
-    x <- readRef r
-    let (x', y) = f x
-    writeRef r x'
-    return y
+    atomicModifyRef r f = do x <- readRef r
+                             let (x', y) = f x
+                             writeRef r x'
+                             return y
 
 #ifndef LANGUAGE_DefaultSignatures
-#define ModifyAtomicRef_defaults\
+#define MonadAtomicRef_defaults\
   atomicModifyRef ref = lift . atomicModifyRef ref
 #else
-#define ModifyAtomicRef_defaults
+#define MonadAtomicRef_defaults
 #endif
 
 instance MonadAtomicRef ref m => MonadAtomicRef ref (ContT r m) where
-  ModifyAtomicRef_defaults
+  MonadAtomicRef_defaults
 instance ( Error e
          , MonadAtomicRef ref m
          ) => MonadAtomicRef ref (ErrorT e m) where
-  ModifyAtomicRef_defaults
+  MonadAtomicRef_defaults
 instance MonadAtomicRef ref m => MonadAtomicRef ref (IdentityT m) where
-  ModifyAtomicRef_defaults
+  MonadAtomicRef_defaults
 instance MonadAtomicRef ref m => MonadAtomicRef ref (ListT m) where
-  ModifyAtomicRef_defaults
+  MonadAtomicRef_defaults
 instance MonadAtomicRef ref m => MonadAtomicRef ref (MaybeT m) where
-  ModifyAtomicRef_defaults
+  MonadAtomicRef_defaults
 instance MonadAtomicRef ref m => MonadAtomicRef ref (ReaderT r m) where
-  ModifyAtomicRef_defaults
+  MonadAtomicRef_defaults
 instance MonadAtomicRef ref m => MonadAtomicRef ref (Lazy.StateT s m) where
-  ModifyAtomicRef_defaults
+  MonadAtomicRef_defaults
 instance MonadAtomicRef ref m => MonadAtomicRef ref (Strict.StateT s m) where
-  ModifyAtomicRef_defaults
+  MonadAtomicRef_defaults
 instance ( Monoid w
          , MonadAtomicRef ref m
          ) => MonadAtomicRef ref (Lazy.WriterT w m) where
-  ModifyAtomicRef_defaults
+  MonadAtomicRef_defaults
 instance ( Monoid w
          , MonadAtomicRef ref m
          ) => MonadAtomicRef ref (Strict.WriterT w m) where
-  ModifyAtomicRef_defaults
+  MonadAtomicRef_defaults
