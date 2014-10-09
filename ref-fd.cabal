@@ -1,5 +1,5 @@
 name:           ref-fd
-version:        0.3.0.3
+version:        0.3.0.4
 cabal-version:  >= 1.6
 license:        BSD3
 license-file:   LICENSE
