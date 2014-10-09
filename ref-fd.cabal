@@ -4,11 +4,11 @@ cabal-version:  >= 1.6
 license:        BSD3
 license-file:   LICENSE
 copyright:      (c) 2006-2011 Harvard University
-		(c) 2011-2012 Geoffrey Mainland
-author:         Geoffrey Mainland <mainland@eecs.harvard.edu>
+		(c) 2011-2014 Geoffrey Mainland
+author:         Geoffrey Mainland <mainland@cs.drexel.edu>
 maintainer:     mainland@eecs.harvard.edu
 stability:      alpha
-homepage:       http://www.eecs.harvard.edu/~mainland/
+homepage:       http://www.cs.drexel.edu/~mainland/
 category:       Control
 synopsis:       A type class for monads with references using functional
                 dependencies.

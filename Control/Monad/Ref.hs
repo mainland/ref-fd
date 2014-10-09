@@ -1,19 +1,18 @@
--- |
--- Module      :  Control.Monad.Ref
--- Copyright   :  (c) Harvard University 2006-2011
---                (c) Geoffrey Mainland 2011-2012
--- License     :  BSD-style
--- Maintainer  :  mainland@eecs.harvard.edu
---
--- Stability   :  experimental
--- Portability :  non-portable
---
---------------------------------------------------------------------------------
-
+{-# LANGUAGE CPP #-}
 {-# LANGUAGE FlexibleInstances #-}
 {-# LANGUAGE FunctionalDependencies #-}
 {-# LANGUAGE MultiParamTypeClasses #-}
 {-# LANGUAGE UndecidableInstances #-}
+
+-- |
+-- Module      :  Control.Monad.Ref
+-- Copyright   :  (c) Harvard University 2006-2011
+--                (c) Geoffrey Mainland 2011-2014
+-- License     :  BSD-style
+-- Maintainer  :  Geoffrey Mainland <mainland@cs.drexel.edu>
+--
+-- Stability   :  experimental
+-- Portability :  non-portable
 
 module Control.Monad.Ref (
     MonadRef(..),
@@ -38,6 +37,10 @@ import Control.Monad.Trans.Writer.Lazy as Lazy (WriterT)
 import Control.Monad.Trans.Writer.Strict as Strict (WriterT)
 import Control.Monad.Trans.Class (lift)
 import Data.IORef (IORef,
+#if MIN_VERSION_base(4,6,0)
+                   atomicModifyIORef',
+                   modifyIORef',
+#endif /* MIN_VERSION_base(4,6,0) */
                    atomicModifyIORef,
                    modifyIORef,
                    newIORef,
@@ -45,6 +48,9 @@ import Data.IORef (IORef,
                    writeIORef)
 import Data.Monoid (Monoid)
 import Data.STRef (STRef,
+#if MIN_VERSION_base(4,6,0)
+                   modifySTRef',
+#endif /* MIN_VERSION_base(4,6,0) */
                    modifySTRef,
                    newSTRef,
                    readSTRef,
@@ -64,22 +70,39 @@ class (Monad m) => MonadRef r m | m -> r where
     -- |Mutate the contents of a reference
     modifyRef :: r a -> (a -> a) -> m ()
     modifyRef r f = readRef r >>= writeRef r . f
+    -- |Strict version of 'modifyRef'
+    modifyRef' :: r a -> (a -> a) -> m ()
+    modifyRef' r f = readRef r >>= \x -> let x' = f x in x' `seq` writeRef r x'
 
 class (MonadRef r m) => MonadAtomicRef r m | m -> r where
     -- |Atomically mutate the contents of a reference
     atomicModifyRef :: r a -> (a -> (a, b)) -> m b
+    -- |Strict version of atomicModifyRef. This forces both the value stored in
+    -- the reference as well as the value returned.
+    atomicModifyRef' :: r a -> (a -> (a, b)) -> m b
+    atomicModifyRef' r f = do
+        b <- atomicModifyRef r
+                (\x -> let (a, b) = f x
+                        in (a, a `seq` b))
+        b `seq` return b
 
 instance MonadRef (STRef s) (ST s) where
-    newRef    = newSTRef
-    readRef   = readSTRef
-    writeRef  = writeSTRef
-    modifyRef = modifySTRef
+    newRef     = newSTRef
+    readRef    = readSTRef
+    writeRef   = writeSTRef
+    modifyRef  = modifySTRef
+#if MIN_VERSION_base(4,6,0)
+    modifyRef' = modifySTRef'
+#endif /* MIN_VERSION_base(4,6,0) */
 
 instance MonadRef IORef IO where
-    newRef    = newIORef
-    readRef   = readIORef
-    writeRef  = writeIORef
-    modifyRef = modifyIORef
+    newRef     = newIORef
+    readRef    = readIORef
+    writeRef   = writeIORef
+    modifyRef  = modifyIORef
+#if MIN_VERSION_base(4,6,0)
+    modifyRef' = modifyIORef'
+#endif /* MIN_VERSION_base(4,6,0) */
 
 instance MonadRef TVar STM where
     newRef    = newTVar
@@ -87,67 +110,80 @@ instance MonadRef TVar STM where
     writeRef  = writeTVar
 
 instance MonadRef r m => MonadRef r (ContT r' m) where
-    newRef    r   = lift $ newRef    r
-    readRef   r   = lift $ readRef   r
-    writeRef  r x = lift $ writeRef  r x
-    modifyRef r f = lift $ modifyRef r f
+    newRef     r   = lift $ newRef     r
+    readRef    r   = lift $ readRef    r
+    writeRef   r x = lift $ writeRef   r x
+    modifyRef  r f = lift $ modifyRef  r f
+    modifyRef' r f = lift $ modifyRef' r f
 
 instance (Error e, MonadRef r m) => MonadRef r (ErrorT e m) where
-    newRef    r   = lift $ newRef    r
-    readRef   r   = lift $ readRef   r
-    writeRef  r x = lift $ writeRef  r x
-    modifyRef r f = lift $ modifyRef r f
+    newRef     r   = lift $ newRef     r
+    readRef    r   = lift $ readRef    r
+    writeRef   r x = lift $ writeRef   r x
+    modifyRef  r f = lift $ modifyRef  r f
+    modifyRef' r f = lift $ modifyRef' r f
 
 instance MonadRef r m => MonadRef r (IdentityT m) where
-    newRef    r   = lift $ newRef    r
-    readRef   r   = lift $ readRef   r
-    writeRef  r x = lift $ writeRef  r x
-    modifyRef r f = lift $ modifyRef r f
+    newRef     r   = lift $ newRef     r
+    readRef    r   = lift $ readRef    r
+    writeRef   r x = lift $ writeRef   r x
+    modifyRef  r f = lift $ modifyRef  r f
+    modifyRef' r f = lift $ modifyRef' r f
 
 instance MonadRef r m => MonadRef r (ListT m) where
-    newRef    r   = lift $ newRef    r
-    readRef   r   = lift $ readRef   r
-    writeRef  r x = lift $ writeRef  r x
-    modifyRef r f = lift $ modifyRef r f
+    newRef     r   = lift $ newRef     r
+    readRef    r   = lift $ readRef    r
+    writeRef   r x = lift $ writeRef   r x
+    modifyRef  r f = lift $ modifyRef  r f
+    modifyRef' r f = lift $ modifyRef' r f
 
 instance MonadRef r m => MonadRef r (MaybeT m) where
-    newRef    r   = lift $ newRef    r
-    readRef   r   = lift $ readRef   r
-    writeRef  r x = lift $ writeRef  r x
-    modifyRef r f = lift $ modifyRef r f
+    newRef     r   = lift $ newRef     r
+    readRef    r   = lift $ readRef    r
+    writeRef   r x = lift $ writeRef   r x
+    modifyRef  r f = lift $ modifyRef  r f
+    modifyRef' r f = lift $ modifyRef' r f
 
 instance MonadRef r m => MonadRef r (ReaderT r' m) where
-    newRef    r   = lift $ newRef    r
-    readRef   r   = lift $ readRef   r
-    writeRef  r x = lift $ writeRef  r x
-    modifyRef r f = lift $ modifyRef r f
+    newRef     r   = lift $ newRef     r
+    readRef    r   = lift $ readRef    r
+    writeRef   r x = lift $ writeRef   r x
+    modifyRef  r f = lift $ modifyRef  r f
+    modifyRef' r f = lift $ modifyRef' r f
 
 instance MonadRef r m => MonadRef r (Lazy.StateT s m) where
-    newRef    r   = lift $ newRef    r
-    readRef   r   = lift $ readRef   r
-    writeRef  r x = lift $ writeRef  r x
-    modifyRef r f = lift $ modifyRef r f
+    newRef     r   = lift $ newRef     r
+    readRef    r   = lift $ readRef    r
+    writeRef   r x = lift $ writeRef   r x
+    modifyRef  r f = lift $ modifyRef  r f
+    modifyRef' r f = lift $ modifyRef' r f
 
 instance MonadRef r m => MonadRef r (Strict.StateT s m) where
-    newRef    r   = lift $ newRef    r
-    readRef   r   = lift $ readRef   r
-    writeRef  r x = lift $ writeRef  r x
-    modifyRef r f = lift $ modifyRef r f
+    newRef     r   = lift $ newRef     r
+    readRef    r   = lift $ readRef    r
+    writeRef   r x = lift $ writeRef   r x
+    modifyRef  r f = lift $ modifyRef  r f
+    modifyRef' r f = lift $ modifyRef' r f
 
 instance (Monoid w, MonadRef r m) => MonadRef r (Lazy.WriterT w m) where
-    newRef    r   = lift $ newRef    r
-    readRef   r   = lift $ readRef   r
-    writeRef  r x = lift $ writeRef  r x
-    modifyRef r f = lift $ modifyRef r f
+    newRef     r   = lift $ newRef     r
+    readRef    r   = lift $ readRef    r
+    writeRef   r x = lift $ writeRef   r x
+    modifyRef  r f = lift $ modifyRef  r f
+    modifyRef' r f = lift $ modifyRef' r f
 
 instance (Monoid w, MonadRef r m) => MonadRef r (Strict.WriterT w m) where
-    newRef    r   = lift $ newRef    r
-    readRef   r   = lift $ readRef   r
-    writeRef  r x = lift $ writeRef  r x
-    modifyRef r f = lift $ modifyRef r f
+    newRef     r   = lift $ newRef     r
+    readRef    r   = lift $ readRef    r
+    writeRef   r x = lift $ writeRef   r x
+    modifyRef  r f = lift $ modifyRef  r f
+    modifyRef' r f = lift $ modifyRef' r f
 
 instance MonadAtomicRef IORef IO where
     atomicModifyRef = atomicModifyIORef
+#if MIN_VERSION_base(4,6,0)
+    atomicModifyRef' = atomicModifyIORef'
+#endif /* MIN_VERSION_base(4,6,0) */
 
 instance MonadAtomicRef TVar STM where
     atomicModifyRef r f = do x <- readRef r
@@ -156,31 +192,41 @@ instance MonadAtomicRef TVar STM where
                              return y
 
 instance MonadAtomicRef r m => MonadAtomicRef r (ContT r' m) where
-    atomicModifyRef r f = lift $ atomicModifyRef r f
+    atomicModifyRef  r f = lift $ atomicModifyRef  r f
+    atomicModifyRef' r f = lift $ atomicModifyRef' r f
 
 instance (Error e, MonadAtomicRef r m) => MonadAtomicRef r (ErrorT e m) where
-    atomicModifyRef r f = lift $ atomicModifyRef r f
+    atomicModifyRef  r f = lift $ atomicModifyRef  r f
+    atomicModifyRef' r f = lift $ atomicModifyRef' r f
 
 instance MonadAtomicRef r m => MonadAtomicRef r (IdentityT m) where
-    atomicModifyRef r f = lift $ atomicModifyRef r f
+    atomicModifyRef  r f = lift $ atomicModifyRef  r f
+    atomicModifyRef' r f = lift $ atomicModifyRef' r f
 
 instance MonadAtomicRef r m => MonadAtomicRef r (ListT m) where
-    atomicModifyRef r f = lift $ atomicModifyRef r f
+    atomicModifyRef  r f = lift $ atomicModifyRef  r f
+    atomicModifyRef' r f = lift $ atomicModifyRef' r f
 
 instance MonadAtomicRef r m => MonadAtomicRef r (MaybeT m) where
-    atomicModifyRef r f = lift $ atomicModifyRef r f
+    atomicModifyRef  r f = lift $ atomicModifyRef  r f
+    atomicModifyRef' r f = lift $ atomicModifyRef' r f
 
 instance MonadAtomicRef r m => MonadAtomicRef r (ReaderT r' m) where
-    atomicModifyRef r f = lift $ atomicModifyRef r f
+    atomicModifyRef  r f = lift $ atomicModifyRef  r f
+    atomicModifyRef' r f = lift $ atomicModifyRef' r f
 
 instance MonadAtomicRef r m => MonadAtomicRef r (Lazy.StateT s m) where
-    atomicModifyRef r f = lift $ atomicModifyRef r f
+    atomicModifyRef  r f = lift $ atomicModifyRef  r f
+    atomicModifyRef' r f = lift $ atomicModifyRef' r f
 
 instance MonadAtomicRef r m => MonadAtomicRef r (Strict.StateT s m) where
-    atomicModifyRef r f = lift $ atomicModifyRef r f
+    atomicModifyRef  r f = lift $ atomicModifyRef  r f
+    atomicModifyRef' r f = lift $ atomicModifyRef' r f
 
 instance (Monoid w, MonadAtomicRef r m) => MonadAtomicRef r (Lazy.WriterT w m) where
-    atomicModifyRef r f = lift $ atomicModifyRef r f
+    atomicModifyRef  r f = lift $ atomicModifyRef  r f
+    atomicModifyRef' r f = lift $ atomicModifyRef' r f
 
 instance (Monoid w, MonadAtomicRef r m) => MonadAtomicRef r (Strict.WriterT w m) where
-    atomicModifyRef r f = lift $ atomicModifyRef r f
+    atomicModifyRef  r f = lift $ atomicModifyRef  r f
+    atomicModifyRef' r f = lift $ atomicModifyRef' r f
