@@ -3,6 +3,7 @@
 {-# LANGUAGE FunctionalDependencies #-}
 {-# LANGUAGE MultiParamTypeClasses #-}
 {-# LANGUAGE UndecidableInstances #-}
+{-# OPTIONS_GHC -fno-warn-warnings-deprecations #-}
 
 -- |
 -- Module      :  Control.Monad.Ref
@@ -27,6 +28,9 @@ import Control.Concurrent.STM.TVar (TVar,
 import Control.Monad.ST (ST)
 import Control.Monad.Trans.Cont (ContT)
 import Control.Monad.Trans.Error (ErrorT, Error)
+#if MIN_VERSION_transformers(0,4,0)
+import Control.Monad.Trans.Except (ExceptT)
+#endif /* MIN_VERSION_transformers(0,4,0) */
 import Control.Monad.Trans.Identity (IdentityT)
 import Control.Monad.Trans.List (ListT)
 import Control.Monad.Trans.Maybe (MaybeT)
@@ -122,6 +126,15 @@ instance (Error e, MonadRef r m) => MonadRef r (ErrorT e m) where
     writeRef   r x = lift $ writeRef   r x
     modifyRef  r f = lift $ modifyRef  r f
     modifyRef' r f = lift $ modifyRef' r f
+
+#if MIN_VERSION_transformers(0,4,0)
+instance (MonadRef r m) => MonadRef r (ExceptT e m) where
+    newRef     r   = lift $ newRef     r
+    readRef    r   = lift $ readRef    r
+    writeRef   r x = lift $ writeRef   r x
+    modifyRef  r f = lift $ modifyRef  r f
+    modifyRef' r f = lift $ modifyRef' r f
+#endif /* MIN_VERSION_transformers(0,4,0) */
 
 instance MonadRef r m => MonadRef r (IdentityT m) where
     newRef     r   = lift $ newRef     r
