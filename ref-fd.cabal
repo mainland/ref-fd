@@ -15,6 +15,7 @@ synopsis:       A type class for monads with references using functional
 description:    Contains a 'MonadRef' type class that abstracts over the
                 details of manipulating references, allowing one to write code
                 that can operate in either the ST monad or the IO monad.
+tested-with:    GHC==7.4.2, GHC==7.6.3, GHC==7.8.3, GHC==7.10.3, GHC==8.0.1
 
 build-type:     Simple
 
