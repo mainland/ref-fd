@@ -198,6 +198,20 @@ instance MonadAtomicRef IORef IO where
     atomicModifyRef' = atomicModifyIORef'
 #endif /* MIN_VERSION_base(4,6,0) */
 
+-- Since there's no forking, it's automatically atomic.
+instance MonadAtomicRef (STRef s) (ST s) where
+    atomicModifyRef r f = do
+      x <- readRef r
+      let (x', y) = f x
+      writeRef r x'
+      return y
+
+    atomicModifyRef' r f = do
+      x <- readRef r
+      let (x', y) = f x
+      writeRef r $! x'
+      return y
+
 instance MonadAtomicRef TVar STM where
     atomicModifyRef r f = do x <- readRef r
                              let (x', y) = f x
