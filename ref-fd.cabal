@@ -17,7 +17,7 @@ description:    Contains a 'MonadRef' type class that abstracts over the
                 that can operate in either the ST monad or the IO monad.
 tested-with:    GHC==7.4.2, GHC==7.6.3, GHC==7.8.4, GHC==7.10.3, GHC==8.0.2,
                 GHC==8.2.2, GHC==8.4.3, GHC==8.6.5, GHC==8.8.4, GHC==8.10.7,
-                GHC==9.0.2, GHC==9.2.2
+                GHC==9.0.2, GHC==9.2.2, GHC==9.4.4, GHC==9.6.1
 
 build-type:     Simple
 
