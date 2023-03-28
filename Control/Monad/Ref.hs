@@ -27,12 +27,16 @@ import Control.Concurrent.STM.TVar (TVar,
                                     writeTVar)
 import Control.Monad.ST (ST)
 import Control.Monad.Trans.Cont (ContT)
+#if !MIN_VERSION_transformers(0,6,0)
 import Control.Monad.Trans.Error (ErrorT, Error)
+#endif /* !MIN_VERSION_transformers(0,6,0) */
 #if MIN_VERSION_transformers(0,4,0)
 import Control.Monad.Trans.Except (ExceptT)
 #endif /* MIN_VERSION_transformers(0,4,0) */
 import Control.Monad.Trans.Identity (IdentityT)
+#if !MIN_VERSION_transformers(0,6,0)
 import Control.Monad.Trans.List (ListT)
+#endif /* !MIN_VERSION_transformers(0,6,0) */
 import Control.Monad.Trans.Maybe (MaybeT)
 import Control.Monad.Trans.Reader (ReaderT)
 import Control.Monad.Trans.State.Lazy as Lazy (StateT)
@@ -120,12 +124,14 @@ instance MonadRef r m => MonadRef r (ContT r' m) where
     modifyRef  r f = lift $ modifyRef  r f
     modifyRef' r f = lift $ modifyRef' r f
 
+#if !MIN_VERSION_transformers(0,6,0)
 instance (Error e, MonadRef r m) => MonadRef r (ErrorT e m) where
     newRef     r   = lift $ newRef     r
     readRef    r   = lift $ readRef    r
     writeRef   r x = lift $ writeRef   r x
     modifyRef  r f = lift $ modifyRef  r f
     modifyRef' r f = lift $ modifyRef' r f
+#endif /* !MIN_VERSION_transformers(0,6,0) */
 
 #if MIN_VERSION_transformers(0,4,0)
 instance (MonadRef r m) => MonadRef r (ExceptT e m) where
@@ -143,12 +149,14 @@ instance MonadRef r m => MonadRef r (IdentityT m) where
     modifyRef  r f = lift $ modifyRef  r f
     modifyRef' r f = lift $ modifyRef' r f
 
+#if !MIN_VERSION_transformers(0,6,0)
 instance MonadRef r m => MonadRef r (ListT m) where
     newRef     r   = lift $ newRef     r
     readRef    r   = lift $ readRef    r
     writeRef   r x = lift $ writeRef   r x
     modifyRef  r f = lift $ modifyRef  r f
     modifyRef' r f = lift $ modifyRef' r f
+#endif /* !MIN_VERSION_transformers(0,6,0) */
 
 instance MonadRef r m => MonadRef r (MaybeT m) where
     newRef     r   = lift $ newRef     r
@@ -222,17 +230,21 @@ instance MonadAtomicRef r m => MonadAtomicRef r (ContT r' m) where
     atomicModifyRef  r f = lift $ atomicModifyRef  r f
     atomicModifyRef' r f = lift $ atomicModifyRef' r f
 
+#if !MIN_VERSION_transformers(0,6,0)
 instance (Error e, MonadAtomicRef r m) => MonadAtomicRef r (ErrorT e m) where
     atomicModifyRef  r f = lift $ atomicModifyRef  r f
     atomicModifyRef' r f = lift $ atomicModifyRef' r f
+#endif /* !MIN_VERSION_transformers(0,6,0) */
 
 instance MonadAtomicRef r m => MonadAtomicRef r (IdentityT m) where
     atomicModifyRef  r f = lift $ atomicModifyRef  r f
     atomicModifyRef' r f = lift $ atomicModifyRef' r f
 
+#if !MIN_VERSION_transformers(0,6,0)
 instance MonadAtomicRef r m => MonadAtomicRef r (ListT m) where
     atomicModifyRef  r f = lift $ atomicModifyRef  r f
     atomicModifyRef' r f = lift $ atomicModifyRef' r f
+#endif /* !MIN_VERSION_transformers(0,6,0) */
 
 instance MonadAtomicRef r m => MonadAtomicRef r (MaybeT m) where
     atomicModifyRef  r f = lift $ atomicModifyRef  r f
